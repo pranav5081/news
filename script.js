@@ -3,25 +3,49 @@ const url = "https://newsapi.org/v2/everything?q=";
 
 window.addEventListener("load", () => fetchNews("Technology"));
 
+const url = "https://newsapi.org/v2/top-headlines?category="; // Example URL
+const API_KEY = "your-api-key-here"; // Your actual API key
+
 async function fetchNews(query) {
-    const res = await fetch(`${url}${query}&apiKey=${API_KEY}`);
-    const data = await res.json();
-    bindData(data.articles);
+    try {
+        const res = await fetch(`${url}${query}&apiKey=${API_KEY}`);
+        
+        // Check if the response is okay (status 200-299)
+        if (!res.ok) {
+            throw new Error(`Network response was not ok: ${res.status}`);
+        }
+
+        const data = await res.json();
+
+        // Log the data for debugging
+        console.log(data);
+
+        // Check if articles exist and are an array
+        if (data.articles && Array.isArray(data.articles)) {
+            bindData(data.articles);
+        } else {
+            console.error('Articles not found or invalid data format:', data);
+        }
+    } catch (error) {
+        console.error('Error fetching news:', error);
+    }
 }
 
 function bindData(articles) {
     const cardsContainer = document.getElementById("cardscontainer");
     const newsCardTemplate = document.getElementById("template-news-card");
 
+    // Clear the existing content
     cardsContainer.innerHTML = "";
 
+    // Loop through the articles and create cards
     articles.forEach((article) => {
-        if (!article.urlToImage) return;
+        if (!article.urlToImage) return; // Skip articles without an image
 
         const cardClone = newsCardTemplate.content.cloneNode(true);
         fillDataInCard(cardClone, article);
         cardsContainer.appendChild(cardClone);
-    })
+    });
 }
 
 function fillDataInCard(cardClone, article) {
@@ -30,17 +54,19 @@ function fillDataInCard(cardClone, article) {
     const newsSource = cardClone.querySelector("#news-source");
     const newsDesc = cardClone.querySelector("#news-desc");
 
+    // Set the image, title, description, and source
     newsImg.src = article.urlToImage;
     newsTitle.innerHTML = `${article.title.slice(0, 60)}...`;
     newsDesc.innerHTML = `${article.description.slice(0, 150)}...`;
 
-    const date = new Date(article.publishedAt).toLocaleString("en-US", { timeZone: "Asia/Jakarta" })
+    const date = new Date(article.publishedAt).toLocaleString("en-US", { timeZone: "Asia/Jakarta" });
 
     newsSource.innerHTML = `${article.source.name} · ${date}`;
 
+    // Add a click event to open the article in a new tab
     cardClone.firstElementChild.addEventListener("click", () => {
         window.open(article.url, "_blank");
-    })
+    });
 }
 
 let curSelectedNav = null;
@@ -61,4 +87,4 @@ searchButton.addEventListener("click", () => {
     fetchNews(query);
     curSelectedNav?.classList.remove("active");
     curSelectedNav = null;
-})
+});
