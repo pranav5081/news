@@ -1,15 +1,41 @@
-const API_KEY = "0ea2bdb2e0714ed0a010339f866ae4b0";
+
+
+const API_KEY = "0ea2bdb2e0714ed0a010339f866ae4b0"; // Replace with your real API key
 const url = "https://newsapi.org/v2/everything?q=";
 
 window.addEventListener("load", () => fetchNews("Technology"));
 
 async function fetchNews(query) {
-    const res = await fetch(`${url}${query}&apiKey=${API_KEY}`);
-    const data = await res.json();
-    bindData(data.articles);
+    try {
+        const res = await fetch(`${url}${query}&apiKey=${API_KEY}`, {
+            headers: {
+                "User-Agent": "Mozilla/5.0",
+                "Accept": "application/json"
+            }
+        });
+
+        if (!res.ok) {
+            throw new Error(`HTTP error! Status: ${res.status}`);
+        }
+
+        const data = await res.json();
+        
+        if (!data.articles) {
+            throw new Error("No articles found");
+        }
+
+        bindData(data.articles);
+    } catch (error) {
+        console.error("Error fetching news:", error);
+    }
 }
 
 function bindData(articles) {
+    if (!Array.isArray(articles)) {
+        console.error("Invalid articles data:", articles);
+        return;
+    }
+
     const cardsContainer = document.getElementById("cardscontainer");
     const newsCardTemplate = document.getElementById("template-news-card");
 
@@ -21,7 +47,7 @@ function bindData(articles) {
         const cardClone = newsCardTemplate.content.cloneNode(true);
         fillDataInCard(cardClone, article);
         cardsContainer.appendChild(cardClone);
-    })
+    });
 }
 
 function fillDataInCard(cardClone, article) {
@@ -34,13 +60,13 @@ function fillDataInCard(cardClone, article) {
     newsTitle.innerHTML = `${article.title.slice(0, 60)}...`;
     newsDesc.innerHTML = `${article.description.slice(0, 150)}...`;
 
-    const date = new Date(article.publishedAt).toLocaleString("en-US", { timeZone: "Asia/Jakarta" })
+    const date = new Date(article.publishedAt).toLocaleString("en-US", { timeZone: "Asia/Jakarta" });
 
     newsSource.innerHTML = `${article.source.name} · ${date}`;
 
     cardClone.firstElementChild.addEventListener("click", () => {
         window.open(article.url, "_blank");
-    })
+    });
 }
 
 let curSelectedNav = null;
@@ -61,4 +87,4 @@ searchButton.addEventListener("click", () => {
     fetchNews(query);
     curSelectedNav?.classList.remove("active");
     curSelectedNav = null;
-})
+});
